@@ -82,15 +82,6 @@ export default {
           i.incomeStatus = parseInt(i.salary) < 5001 ? 'Low' : parseInt(i.salary) > 5000 && parseInt(i.salary) < 15001 ? 'Middle' : 'High';
           delete i.name;
           delete i.surname;
-          // let j = {
-          //   name: i.İsim,
-          //   surname: i.Soyisim,
-          //   age: i.Yaş,
-          //   birthDate: new Date().getFullYear() - i.Yaş,
-          //   gender: i.Cinsiyet === 'F' ? 'Erkek' : 'Kadın',
-          //   profession: i.Meslek,
-          //   salary: Math.floor(Math.random() * 29000) + 1000 + ' TL'
-          // };
           return i;
         });
         vm.data = mockData;
