@@ -1,7 +1,8 @@
 <template>
   <div>
-    <h1>Excel To Json - Json To Excel Converter</h1>
+    <h1>Excel Converter</h1>
     <vue-good-table
+      id="my-table"
       v-if="data"
       :columns="columns"
       :rows="data"
@@ -10,11 +11,11 @@
       }"
       styleClass="vgt-table striped"
     >
-      >
       <div slot="table-actions">
         <label class="btn" for="file">Import</label>
         <input type="file" id="file" @change="convert($event)" />
         <button class="btn" @click="exportToExcel()">Export</button>
+        <button class="btn" @click="convertToPdf()">Pdf</button>
       </div>
     </vue-good-table>
   </div>
@@ -25,6 +26,7 @@ import XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import 'vue-good-table/dist/vue-good-table.css';
 import { VueGoodTable } from 'vue-good-table';
+import { jsPDF } from 'jspdf';
 
 export default {
   name: 'App',
@@ -42,6 +44,10 @@ export default {
         {
           label: 'Age',
           field: 'age'
+        },
+        {
+          label: 'Birth Date',
+          field: 'birthDate'
         },
         {
           label: 'Status',
@@ -77,12 +83,17 @@ export default {
         let worksheet = workbook.Sheets[sheetName];
         let rowObject = XLSX.utils.sheet_to_row_object_array(worksheet);
         let mockData = rowObject.map((i) => {
-          i.fullName = i.name + ' ' + i.surname;
-          i.status = i.age < 18 ? 'Child' : i.age > 17 && i.age < 66 ? 'Young' : i.age > 65 && i.age < 80 ? 'Middle Aged' : 'Old';
-          i.incomeStatus = parseInt(i.salary) < 5001 ? 'Low' : parseInt(i.salary) > 5000 && parseInt(i.salary) < 15001 ? 'Middle' : 'High';
-          delete i.name;
-          delete i.surname;
-          return i;
+          let j = {
+            fullName: i.name + ' ' + i.surname,
+            age: i.age,
+            birthDate: i.birthDate,
+            status: i.age < 18 ? 'Child' : i.age > 17 && i.age < 66 ? 'Young' : i.age > 65 && i.age < 80 ? 'Middle Aged' : 'Old',
+            gender: i.gender,
+            profession: i.profession,
+            salary: i.salary,
+            incomeStatus: parseInt(i.salary) < 5001 ? 'Low' : parseInt(i.salary) > 5000 && parseInt(i.salary) < 15001 ? 'Middle' : 'High'
+          };
+          return j;
         });
         vm.data = mockData;
       };
@@ -99,6 +110,19 @@ export default {
       let excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       let data = new Blob([excelBuffer], { type: 'xlsx' });
       saveAs(data, 'sampleExcel' + '_export_' + new Date().getTime() + '.xlsx');
+    },
+    convertToPdf() {
+      var doc = new jsPDF();
+      let new_arr = [];
+      for (var i = 0, j = this.data.length; i < j; i++) {
+        new_arr.push(this.data[i]);
+      }
+      new_arr = this.data.map((key) => Object.values(key));
+      doc.autoTable({
+        head: [['Full Name', 'Age', 'Birth Date', 'Status', 'Gender', 'Profession', 'Salary', 'Income Status']],
+        body: new_arr
+      });
+      doc.save('export_table.pdf');
     }
   }
 };
