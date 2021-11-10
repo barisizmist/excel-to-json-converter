@@ -18,6 +18,9 @@
         <button class="btn" @click="convertToPdf()">Pdf</button>
       </div>
     </vue-good-table>
+    <div v-if="this.converting" class="shape">
+      <div class="lds-hourglass"></div>
+    </div>
   </div>
 </template>
 
@@ -27,6 +30,7 @@ import { saveAs } from 'file-saver';
 import 'vue-good-table/dist/vue-good-table.css';
 import { VueGoodTable } from 'vue-good-table';
 import { jsPDF } from 'jspdf';
+require('jspdf-autotable');
 
 export default {
   name: 'App',
@@ -69,7 +73,8 @@ export default {
           label: 'Income Status',
           field: 'incomeStatus'
         }
-      ]
+      ],
+      converting: false
     };
   },
   methods: {
@@ -112,17 +117,28 @@ export default {
       saveAs(data, 'sampleExcel' + '_export_' + new Date().getTime() + '.xlsx');
     },
     convertToPdf() {
-      var doc = new jsPDF();
-      let new_arr = [];
-      for (var i = 0, j = this.data.length; i < j; i++) {
-        new_arr.push(this.data[i]);
-      }
-      new_arr = this.data.map((key) => Object.values(key));
-      doc.autoTable({
-        head: [['Full Name', 'Age', 'Birth Date', 'Status', 'Gender', 'Profession', 'Salary', 'Income Status']],
-        body: new_arr
+      this.converting = true;
+      this.asyncPDF().then(() => {
+        this.converting = false;
       });
-      doc.save('export_table.pdf');
+    },
+    asyncPDF() {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          var doc = new jsPDF();
+          let new_arr = [];
+          for (var i = 0, j = this.data.length; i < j; i++) {
+            new_arr.push(this.data[i]);
+          }
+          new_arr = this.data.map((key) => Object.values(key));
+          doc.autoTable({
+            head: [['Full Name', 'Age', 'Birth Date', 'Status', 'Gender', 'Profession', 'Salary', 'Income Status']],
+            body: new_arr
+          });
+          doc.save('export_table.pdf');
+          resolve('resolved');
+        }, 100);
+      });
     }
   }
 };
@@ -153,5 +169,48 @@ body {
 }
 input {
   display: none;
+}
+.shape {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lds-hourglass {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-hourglass:after {
+  content: ' ';
+  display: block;
+  border-radius: 50%;
+  width: 0;
+  height: 0;
+  margin: 8px;
+  box-sizing: border-box;
+  border: 32px solid #fff;
+  border-color: #fff transparent #fff transparent;
+  animation: lds-hourglass 1.2s infinite;
+}
+@keyframes lds-hourglass {
+  0% {
+    transform: rotate(0);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  50% {
+    transform: rotate(900deg);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  100% {
+    transform: rotate(1800deg);
+  }
 }
 </style>
